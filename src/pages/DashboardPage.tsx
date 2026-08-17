@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, ExternalLink, Copy, Edit, Trash2, Calendar, Sparkles, Check } from 'lucide-react';
+import { PlusCircle, ExternalLink, QrCode, Edit, Trash2, Calendar, Sparkles, Heart } from 'lucide-react';
 import type { BirthdayData } from '../types/birthday';
 import { getAllBirthdays, deleteBirthday, getBirthdayShareUrl } from '../services/birthdayService';
 import { getThemeById } from '../config/themes';
+import { ShareModal } from '../components/create/ShareModal';
 
 export const DashboardPage: React.FC = () => {
   const [birthdays, setBirthdays] = useState<BirthdayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [selectedBirthdayForQR, setSelectedBirthdayForQR] = useState<BirthdayData | null>(null);
 
   useEffect(() => {
     loadBirthdays();
@@ -24,13 +25,6 @@ export const DashboardPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleCopyLink = (item: BirthdayData) => {
-    const url = getBirthdayShareUrl(item);
-    navigator.clipboard.writeText(url);
-    setCopiedSlug(item.slug);
-    setTimeout(() => setCopiedSlug(null), 2000);
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -50,7 +44,7 @@ export const DashboardPage: React.FC = () => {
               Your Birthday Surprises 🎉
             </h1>
             <p className="text-slate-500 text-sm font-medium mt-1">
-              Manage your created surprise websites, share links, or edit messages.
+              Manage your created surprise experiences, access QR codes, and edit messages.
             </p>
           </div>
 
@@ -87,7 +81,6 @@ export const DashboardPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {birthdays.map((item) => {
               const theme = getThemeById(item.theme_id);
-              const isCopied = copiedSlug === item.slug;
               const openUrl = getBirthdayShareUrl(item);
 
               return (
@@ -126,32 +119,46 @@ export const DashboardPage: React.FC = () => {
 
                   {/* Body Content */}
                   <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 block mb-1">Public Link Slug:</span>
-                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-700 truncate">
-                        /birthday/{item.slug}
+                    <div className="p-3 bg-gradient-to-r from-pink-50/50 to-purple-50/50 rounded-2xl border border-pink-100/60 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
+                          <Heart className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-[11px] font-bold text-slate-400 block leading-tight">Created by</span>
+                          <span className="text-xs font-bold text-slate-700">{item.sender_name || 'Anonymous'}</span>
+                        </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBirthdayForQR(item)}
+                        className="px-3 py-1.5 rounded-xl bg-white border border-pink-200 hover:border-pink-400 text-pink-600 hover:text-pink-700 font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>QR Code</span>
+                      </button>
                     </div>
 
                     {/* Actions Grid */}
                     <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedBirthdayForQR(item)}
+                        className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm shadow-pink-500/20 cursor-pointer"
+                      >
+                        <QrCode className="w-3.5 h-3.5" />
+                        <span>Get QR Code</span>
+                      </button>
+
                       <a
                         href={openUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="py-2.5 px-3 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                        className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
                       >
                         <ExternalLink className="w-3.5 h-3.5" /> Open Page
                       </a>
-
-                      <button
-                        type="button"
-                        onClick={() => handleCopyLink(item)}
-                        className="py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{isCopied ? 'Copied!' : 'Copy Link'}</span>
-                      </button>
 
                       <Link
                         to={`/edit/${item.id}`}
@@ -175,6 +182,15 @@ export const DashboardPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* QR Code Modal */}
+      {selectedBirthdayForQR && (
+        <ShareModal
+          birthday={selectedBirthdayForQR}
+          onClose={() => setSelectedBirthdayForQR(null)}
+        />
+      )}
     </div>
   );
 };
+

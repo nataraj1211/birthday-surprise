@@ -308,36 +308,46 @@ export function decodeBirthdayFromUrlPayload(payload: string, slug: string): Bir
   }
 }
 
-/**
- * Centralized share URL generator.
- * Produces clean production URL: https://domain/birthday/SLUG (with offline fallback if Supabase not configured).
- */
-export function getBirthdayShareUrl(birthday: BirthdayData): string {
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const baseUrl = `${origin}/birthday/${birthday.slug}`;
+export const PRODUCTION_ORIGIN = 'https://prise-vert-rho.vercel.app';
 
-  if (isSupabaseConfigured) {
-    return baseUrl;
+/**
+ * Returns the verified production origin.
+ * Strictly guarantees that localhost / 127.0.0.1 is NEVER encoded into QR codes or public links.
+ */
+export function getProductionOrigin(): string {
+  const envUrl = (import.meta.env.VITE_PUBLIC_APP_URL || import.meta.env.VITE_APP_URL || '').trim();
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.replace(/\/+$/, '');
   }
 
-  // Offline / local development fallback
-  const payloadStr = encodeBirthdayToUrlPayload(birthday);
-  return payloadStr ? `${baseUrl}?d=${payloadStr}` : baseUrl;
+  if (typeof window !== 'undefined' && window.location.origin) {
+    const origin = window.location.origin;
+    if (!origin.includes('localhost') && !origin.includes('127.0.0.1') && !origin.startsWith('file:')) {
+      return origin;
+    }
+  }
+
+  return PRODUCTION_ORIGIN;
+}
+
+/**
+ * Centralized share URL generator.
+ * Produces exact complete HTTPS production URL: https://prise-vert-rho.vercel.app/birthday/SLUG
+ */
+export function getBirthdayShareUrl(birthday: BirthdayData): string {
+  return `https://prise-vert-rho.vercel.app/birthday/${birthday.slug}`;
 }
 
 /**
  * Fetch a birthday page by unique slug.
- * Production priority:
- * 1. Supabase Database
- * 2. LocalStorage fallback
- * 3. URL query payload (?d=...)
+ * Supabase Database is the primary and required source of truth for all public birthday links.
  */
 export async function getBirthdayBySlug(slug: string): Promise<BirthdayData | null> {
   if (slug === 'demo' || slug === '7xK92Lm') {
     return SAMPLE_BIRTHDAY;
   }
 
-  // 1. Supabase Database (Primary Source of Truth)
+  // Supabase Database Query (Production Source of Truth)
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -349,28 +359,11 @@ export async function getBirthdayBySlug(slug: string): Promise<BirthdayData | nu
       if (!error && data) {
         return normalizeBirthdayRecord(data);
       }
-    } catch (err) {
-      console.warn('Supabase fetch by slug failed, checking local storage:', err);
-    }
-  }
-
-  // 2. Local Storage Fallback
-  const locals = getLocalBirthdays();
-  const found = locals.find((b) => b.slug === slug);
-  if (found) {
-    return found;
-  }
-
-  // 3. Encoded URL Query Parameter fallback `?d=...`
-  if (typeof window !== 'undefined') {
-    const urlParams = new URLSearchParams(window.location.search);
-    const encodedPayload = urlParams.get('d');
-    if (encodedPayload) {
-      const decoded = decodeBirthdayFromUrlPayload(encodedPayload, slug);
-      if (decoded) {
-        saveLocalBirthdays([decoded, ...locals.filter((b) => b.slug !== slug)]);
-        return decoded;
+      if (error) {
+        console.error('Supabase fetch by slug error:', error);
       }
+    } catch (err) {
+      console.error('Supabase query exception:', err);
     }
   }
 
@@ -439,15 +432,35 @@ export async function getAllBirthdays(): Promise<BirthdayData[]> {
 }
 
 /**
- * Create a new Birthday surprise record with verified unique slug
+ * Helper to generate a standard UUID v4
+ */
+function generateUUID(): string {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+/**
+ * Create a new Birthday surprise record with verified unique slug.
+ * Supabase MUST be the source of truth; errors are thrown if publishing fails.
  */
 export async function createBirthday(input: BirthdayFormInput): Promise<BirthdayData> {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured. Please check your environment variables (VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY).');
+  }
+
   const slug = await generateUniqueSlug();
   const now = new Date().toISOString();
   const rel = input.relationship_type || input.experience_type || 'girlfriend';
+  const newId = generateUUID();
 
-  const newBirthday: BirthdayData = {
-    id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `bday_${Date.now()}`,
+  const recordToInsert = {
+    id: newId,
     slug,
     name: input.name,
     birthday_date: input.birthday_date,
@@ -461,75 +474,45 @@ export async function createBirthday(input: BirthdayFormInput): Promise<Birthday
     relationship_type: rel,
     experience_type: rel,
     design_id: input.design_id || 'romantic-rose',
-    relationship_role: input.relationship_role || undefined,
-    nickname: input.nickname || undefined,
-    custom_ending_message: input.custom_ending_message || undefined,
+    relationship_role: input.relationship_role || null,
+    nickname: input.nickname || null,
+    custom_ending_message: input.custom_ending_message || null,
     story_data: input.story_data || SAMPLE_BIRTHDAY.story_data,
     created_at: now,
     updated_at: now,
   };
 
-  if (isSupabaseConfigured && supabase) {
-    try {
-      const recordToInsert = {
-        id: newBirthday.id,
-        slug: newBirthday.slug,
-        name: newBirthday.name,
-        birthday_date: newBirthday.birthday_date,
-        sender_name: newBirthday.sender_name,
-        profile_image_url: newBirthday.profile_image_url,
-        memory_image_urls: newBirthday.memory_image_urls,
-        intro_text: newBirthday.intro_text,
-        birthday_message: newBirthday.birthday_message,
-        music_url: newBirthday.music_url,
-        theme_id: newBirthday.theme_id,
-        relationship_type: rel,
-        experience_type: rel,
-        design_id: newBirthday.design_id,
-        relationship_role: newBirthday.relationship_role || null,
-        nickname: newBirthday.nickname || null,
-        custom_ending_message: newBirthday.custom_ending_message || null,
-        story_data: newBirthday.story_data,
-        created_at: now,
-        updated_at: now,
-      };
+  const { data, error } = await supabase
+    .from('birthday_surprises')
+    .insert([recordToInsert])
+    .select()
+    .single();
 
-      const { data, error } = await supabase
-        .from('birthday_surprises')
-        .insert([recordToInsert])
-        .select()
-        .single();
-
-      if (!error && data) {
-        const saved = normalizeBirthdayRecord(data);
-        const locals = getLocalBirthdays();
-        saveLocalBirthdays([saved, ...locals.filter((b) => b.id !== saved.id)]);
-        return saved;
-      } else if (error) {
-        console.warn('Supabase insert error, saving locally:', error);
-      }
-    } catch (err) {
-      console.warn('Supabase insert exception, falling back to local storage:', err);
-    }
+  if (error || !data) {
+    console.error('Supabase insert error:', error);
+    throw new Error(error?.message || 'Birthday could not be published to Supabase.');
   }
 
-  // Save to local storage
+  const saved = normalizeBirthdayRecord(data);
+  // Cache to local storage as creator convenience only
   const locals = getLocalBirthdays();
-  saveLocalBirthdays([newBirthday, ...locals.filter((b) => b.id !== newBirthday.id)]);
-  return newBirthday;
+  saveLocalBirthdays([saved, ...locals.filter((b) => b.id !== saved.id)]);
+  return saved;
 }
 
 /**
- * Update an existing Birthday surprise keeping the EXACT SAME public URL slug
+ * Update an existing Birthday surprise in Supabase
  */
 export async function updateBirthday(id: string, input: BirthdayFormInput): Promise<BirthdayData> {
+  if (!isSupabaseConfigured || !supabase) {
+    throw new Error('Supabase is not configured. Please check your environment variables.');
+  }
+
   const existing = await getBirthdayById(id);
   const now = new Date().toISOString();
   const rel = input.relationship_type || input.experience_type || existing?.relationship_type || existing?.experience_type || 'girlfriend';
 
-  const updatedBirthday: BirthdayData = {
-    id,
-    slug: existing?.slug || generateRandomSlug(7),
+  const updatePayload = {
     name: input.name,
     birthday_date: input.birthday_date,
     sender_name: input.sender_name,
@@ -542,62 +525,31 @@ export async function updateBirthday(id: string, input: BirthdayFormInput): Prom
     relationship_type: rel,
     experience_type: rel,
     design_id: input.design_id || existing?.design_id || 'romantic-rose',
-    relationship_role: input.relationship_role || undefined,
-    nickname: input.nickname || undefined,
-    custom_ending_message: input.custom_ending_message || undefined,
+    relationship_role: input.relationship_role || null,
+    nickname: input.nickname || null,
+    custom_ending_message: input.custom_ending_message || null,
     story_data: input.story_data,
-    created_at: existing?.created_at || now,
     updated_at: now,
   };
 
-  if (isSupabaseConfigured && supabase) {
-    try {
-      const updatePayload = {
-        name: updatedBirthday.name,
-        birthday_date: updatedBirthday.birthday_date,
-        sender_name: updatedBirthday.sender_name,
-        profile_image_url: updatedBirthday.profile_image_url,
-        memory_image_urls: updatedBirthday.memory_image_urls,
-        intro_text: updatedBirthday.intro_text,
-        birthday_message: updatedBirthday.birthday_message,
-        music_url: updatedBirthday.music_url,
-        theme_id: updatedBirthday.theme_id,
-        relationship_type: rel,
-        experience_type: rel,
-        design_id: updatedBirthday.design_id,
-        relationship_role: updatedBirthday.relationship_role || null,
-        nickname: updatedBirthday.nickname || null,
-        custom_ending_message: updatedBirthday.custom_ending_message || null,
-        story_data: updatedBirthday.story_data,
-        updated_at: now,
-      };
+  const { data, error } = await supabase
+    .from('birthday_surprises')
+    .update(updatePayload)
+    .eq('id', id)
+    .select()
+    .single();
 
-      const { data, error } = await supabase
-        .from('birthday_surprises')
-        .update(updatePayload)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (!error && data) {
-        const saved = normalizeBirthdayRecord(data);
-        const locals = getLocalBirthdays().map((b) => (b.id === id ? saved : b));
-        saveLocalBirthdays(locals);
-        return saved;
-      }
-    } catch (err) {
-      console.warn('Supabase update failed, updating locally:', err);
-    }
+  if (error || !data) {
+    console.error('Supabase update error:', error);
+    throw new Error(error?.message || 'Birthday could not be updated in Supabase.');
   }
 
-  const locals = getLocalBirthdays();
-  const existsLocally = locals.some((b) => b.id === id || b.slug === updatedBirthday.slug);
-  const updatedLocals = existsLocally
-    ? locals.map((b) => (b.id === id || b.slug === updatedBirthday.slug ? updatedBirthday : b))
-    : [updatedBirthday, ...locals];
-  saveLocalBirthdays(updatedLocals);
-  return updatedBirthday;
+  const saved = normalizeBirthdayRecord(data);
+  const locals = getLocalBirthdays().map((b) => (b.id === id ? saved : b));
+  saveLocalBirthdays(locals);
+  return saved;
 }
+
 
 /**
  * Delete a birthday record by ID

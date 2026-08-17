@@ -140,13 +140,18 @@ export const CreateBirthdayPage: React.FC = () => {
         const created = await createBirthday(formData);
         setCreatedBirthday(created);
       }
-    } catch (err) {
-      console.error('Error saving birthday surprise:', err);
-      alert('Something went wrong saving the birthday surprise. Please try again.');
+    } catch (err: unknown) {
+      console.error('Error publishing birthday surprise to Supabase:', err);
+      const msg =
+        err instanceof Error
+          ? err.message
+          : "We couldn't publish your birthday surprise. Please check your connection and try again.";
+      alert(`Could not publish surprise: ${msg}`);
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-slate-50 py-6 sm:py-10 px-2 sm:px-4">

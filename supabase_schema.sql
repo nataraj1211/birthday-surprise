@@ -29,9 +29,30 @@ CREATE TABLE IF NOT EXISTS public.birthday_surprises (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Ensure all columns exist (in case table was created with default Supabase template)
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS birthday_date DATE;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS sender_name TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS profile_image_url TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS memory_image_urls JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS intro_text TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS birthday_message TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS music_url TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS theme_id TEXT DEFAULT 'sakura-dream';
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS relationship_type TEXT DEFAULT 'girlfriend';
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS experience_type TEXT DEFAULT 'girlfriend';
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS design_id TEXT DEFAULT 'romantic-rose';
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS relationship_role TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS nickname TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS custom_ending_message TEXT;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS story_data JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+
 -- 2. Performance & Lookup Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS birthday_surprises_slug_idx ON public.birthday_surprises (slug);
 CREATE INDEX IF NOT EXISTS birthday_surprises_created_at_idx ON public.birthday_surprises (created_at DESC);
+
 
 -- 3. Automatic Updated_At Timestamp Trigger
 CREATE OR REPLACE FUNCTION public.handle_updated_at()

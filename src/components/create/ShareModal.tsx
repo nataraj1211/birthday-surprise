@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Check, Copy, ExternalLink, Share2, MessageCircle, PartyPopper, X, LayoutDashboard } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Download, X, PartyPopper, LayoutDashboard, Check } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import type { BirthdayData } from '../../types/birthday';
-import { getBirthdayShareUrl } from '../../services/birthdayService';
 
 interface Props {
   birthday: BirthdayData;
@@ -9,119 +9,117 @@ interface Props {
 }
 
 export const ShareModal: React.FC<Props> = ({ birthday, onClose }) => {
-  const [copied, setCopied] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const qrWrapperRef = useRef<HTMLDivElement>(null);
 
-  const publicUrl = getBirthdayShareUrl(birthday);
-  const displayUrl = `${window.location.origin}/birthday/${birthday.slug}`;
+  // Exact complete production URL starting with https://
+  const slug = birthday.slug;
+  const birthdayUrl = `https://prise-vert-rho.vercel.app/birthday/${slug}`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(publicUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
+  useEffect(() => {
+    // Development-only console log verification as required
+    console.log("QR CODE URL:", birthdayUrl);
+  }, [birthdayUrl]);
 
-  const whatsappMessage = `Hey! I made a little birthday surprise for you 🎂💖\n\nOpen it here:\n${publicUrl}`;
-  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappMessage)}`;
+  const handleDownloadQR = () => {
+    const canvas = qrWrapperRef.current?.querySelector('canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
 
-  const handleWebShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Birthday Surprise for ${birthday.name}! 🎂`,
-          text: `Hey! I made a little birthday surprise for you 🎂💖`,
-          url: publicUrl,
-        });
-      } catch (err) {
-        console.log('Share dismissed:', err);
-      }
-    } else {
-      copyToClipboard();
-    }
+    // Create high quality PNG download
+    const pngUrl = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    downloadLink.download = `birthday-surprise-${birthday.slug}.png`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+
+    setDownloaded(true);
+    setTimeout(() => setDownloaded(false), 2500);
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-lg bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-2xl space-y-4 sm:space-y-6 relative animate-in zoom-in-95 duration-300 text-center border border-pink-100">
-        {/* Top Right Close Button */}
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 relative animate-in zoom-in-95 duration-300 text-center border border-pink-100">
+        {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-3.5 right-3.5 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
-          title="Close & Go to Dashboard"
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+          title="Close"
+          aria-label="Close"
         >
-          <X className="w-4 h-4 sm:w-5 sm:h-5" />
+          <X className="w-5 h-5" />
         </button>
 
-        <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-full mx-auto bg-gradient-to-tr from-pink-500 to-rose-500 text-white flex items-center justify-center shadow-lg shadow-pink-500/30 animate-bounce">
-          <PartyPopper className="w-7 h-7 sm:w-10 sm:h-10" />
+        {/* Festive Icon & Heading */}
+        <div className="space-y-3">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full mx-auto bg-gradient-to-tr from-pink-500 via-rose-500 to-purple-600 text-white flex items-center justify-center shadow-lg shadow-pink-500/30">
+            <PartyPopper className="w-8 h-8 sm:w-10 sm:h-10 animate-bounce" />
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            🎉 Birthday Surprise Created!
+          </h2>
         </div>
 
-        <div className="space-y-1 sm:space-y-2">
-          <h3 className="text-xl sm:text-3xl font-extrabold text-slate-800">
-            Your Birthday Surprise is Ready! 🎉
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium max-w-sm mx-auto">
-            Saved to your Dashboard! Share this special link with <span className="font-bold text-pink-600">{birthday.name}</span> to reveal their interactive birthday story.
+        {/* Centered QR Code Card with pure white background & full quiet zone */}
+        <div className="bg-gradient-to-b from-pink-50 via-purple-50 to-white p-4 sm:p-5 rounded-2xl border border-pink-100/80 shadow-inner flex flex-col items-center justify-center">
+          <div
+            ref={qrWrapperRef}
+            className="p-4 bg-white rounded-2xl shadow-md border border-slate-100 flex items-center justify-center"
+          >
+            <QRCodeCanvas
+              value={birthdayUrl}
+              size={320}
+              level="H"
+              bgColor="#FFFFFF"
+              fgColor="#000000"
+              marginSize={4}
+              style={{ width: '100%', maxWidth: '320px', height: 'auto', display: 'block' }}
+            />
+
+          </div>
+
+          <p className="text-sm font-semibold text-slate-700 mt-4">
+            Scan this QR code to open the birthday surprise 💖
           </p>
         </div>
 
-        {/* Public Link Box */}
-        <div className="p-2.5 sm:p-3.5 bg-slate-50 rounded-xl sm:rounded-2xl border border-slate-200 flex items-center justify-between gap-2">
-          <span className="text-xs sm:text-sm font-semibold text-slate-700 truncate text-left pl-1 sm:pl-2">
-            {displayUrl}
-          </span>
+        {/* Action Buttons */}
+        <div className="space-y-3 pt-1">
+          {/* Download QR Code Button */}
           <button
-            onClick={copyToClipboard}
-            className="flex-shrink-0 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-xs font-bold flex items-center gap-1 shadow-md shadow-pink-500/20 transition-all cursor-pointer"
+            type="button"
+            onClick={handleDownloadQR}
+            className="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-extrabold text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
+            {downloaded ? (
+              <>
+                <Check className="w-5 h-5 text-white" />
+                <span>Downloaded QR Code!</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-5 h-5" />
+                <span>Download QR Code</span>
+              </>
+            )}
           </button>
-        </div>
 
-        {/* Action Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1 sm:pt-2">
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
-            <span>Share on WhatsApp 💚</span>
-          </a>
-
-          <a
-            href={publicUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-3 sm:py-3.5 px-3 sm:px-4 rounded-xl sm:rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition-transform hover:scale-[1.02] active:scale-[0.98]"
-          >
-            <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span>Open Birthday Page 🎂</span>
-          </a>
-        </div>
-
-        {/* Dashboard button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
-        >
-          <LayoutDashboard className="w-4 h-4 text-pink-500" />
-          <span>View All in Dashboard 📊</span>
-        </button>
-
-        <div className="flex items-center justify-center pt-2 text-xs">
+          {/* Go to Dashboard Button */}
           <button
-            onClick={handleWebShare}
-            className="text-slate-600 hover:text-pink-600 font-bold flex items-center gap-1.5 cursor-pointer"
+            type="button"
+            onClick={onClose}
+            className="w-full py-3 px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
-            <Share2 className="w-4 h-4 text-pink-500" />
-            <span>Native Share 📤</span>
+            <LayoutDashboard className="w-4 h-4 text-pink-500" />
+            <span>Go to Dashboard</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+
+

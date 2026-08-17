@@ -308,7 +308,7 @@ export function decodeBirthdayFromUrlPayload(payload: string, slug: string): Bir
   }
 }
 
-export const PRODUCTION_ORIGIN = 'https://prise-vert-rho.vercel.app';
+export const PRODUCTION_ORIGIN = 'https://birthday-surprise-vert-rho.vercel.app.vercel.app';
 
 /**
  * Returns the verified production origin.
@@ -332,11 +332,10 @@ export function getProductionOrigin(): string {
 
 /**
  * Centralized share URL generator.
- * Produces exact complete HTTPS production URL: https://prise-vert-rho.vercel.app/birthday/SLUG
+ * Produces exact complete HTTPS production URL: https://https://birthday-surprise-vert-rho.vercel.app.vercel.app/birthday/SLUG
  */
 export function getBirthdayShareUrl(birthday: BirthdayData): string {
-  return `https://prise-vert-rho.vercel.app/birthday/${birthday.slug}`;
-}
+return `https://birthday-surprise-vert-rho.vercel.app/birthday/${birthday.slug}`;}
 
 /**
  * Fetch a birthday page by unique slug.

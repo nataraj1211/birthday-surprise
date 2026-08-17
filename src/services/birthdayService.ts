@@ -432,20 +432,6 @@ export async function getAllBirthdays(): Promise<BirthdayData[]> {
 }
 
 /**
- * Helper to generate a standard UUID v4
- */
-function generateUUID(): string {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
-
-/**
  * Create a new Birthday surprise record with verified unique slug.
  * Supabase MUST be the source of truth; errors are thrown if publishing fails.
  */
@@ -457,10 +443,7 @@ export async function createBirthday(input: BirthdayFormInput): Promise<Birthday
   const slug = await generateUniqueSlug();
   const now = new Date().toISOString();
   const rel = input.relationship_type || input.experience_type || 'girlfriend';
-  const newId = generateUUID();
-
   const recordToInsert = {
-    id: newId,
     slug,
     name: input.name,
     birthday_date: input.birthday_date,

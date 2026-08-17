@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Download, X, PartyPopper, LayoutDashboard, Check } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import type { BirthdayData } from '../../types/birthday';
+import { getBirthdayShareUrl } from '../../services/birthdayService';
 
 interface Props {
   birthday: BirthdayData;
@@ -12,9 +13,8 @@ export const ShareModal: React.FC<Props> = ({ birthday, onClose }) => {
   const [downloaded, setDownloaded] = useState(false);
   const qrWrapperRef = useRef<HTMLDivElement>(null);
 
-  // Exact complete production URL starting with https://
-  const slug = birthday.slug;
-  const birthdayUrl = `https://prise-vert-rho.vercel.app/birthday/${slug}`;
+  // Exact complete production URL using permanent production origin
+  const birthdayUrl = getBirthdayShareUrl(birthday);
 
   useEffect(() => {
     // Development-only console log verification as required

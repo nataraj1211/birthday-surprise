@@ -279,8 +279,8 @@ function normalizeBirthdayRecord(
 
     profile_image_url: String(
       raw.profile_image_url ||
-        SAMPLE_BIRTHDAY.profile_image_url ||
-        ''
+      SAMPLE_BIRTHDAY.profile_image_url ||
+      ''
     ),
 
     memory_image_urls:
@@ -300,7 +300,7 @@ function normalizeBirthdayRecord(
 
     theme_id: String(
       raw.theme_id ||
-        'sakura-dream'
+      'sakura-dream'
     ),
 
     relationship_type:
@@ -312,29 +312,29 @@ function normalizeBirthdayRecord(
     design_id:
       raw.design_id
         ? String(
-            raw.design_id
-          )
+          raw.design_id
+        )
         : undefined,
 
     relationship_role:
       raw.relationship_role
         ? String(
-            raw.relationship_role
-          )
+          raw.relationship_role
+        )
         : undefined,
 
     nickname:
       raw.nickname
         ? String(
-            raw.nickname
-          )
+          raw.nickname
+        )
         : undefined,
 
     custom_ending_message:
       raw.custom_ending_message
         ? String(
-            raw.custom_ending_message
-          )
+          raw.custom_ending_message
+        )
         : undefined,
 
     story_data:
@@ -344,12 +344,12 @@ function normalizeBirthdayRecord(
 
     created_at: String(
       raw.created_at ||
-        new Date().toISOString()
+      new Date().toISOString()
     ),
 
     updated_at: String(
       raw.updated_at ||
-        new Date().toISOString()
+      new Date().toISOString()
     ),
   };
 }
@@ -401,7 +401,7 @@ export async function compressImageFile(
               Math.round(
                 (height *
                   maxWidth) /
-                  width
+                width
               );
 
             width =
@@ -566,7 +566,7 @@ export function saveLocalBirthdays(
             music_url:
               isDataUrl(
                 birthday.music_url ||
-                  ''
+                ''
               )
                 ? null
                 : birthday.music_url,
@@ -593,7 +593,7 @@ function isDataUrl(
 ): boolean {
   return (
     typeof value ===
-      'string' &&
+    'string' &&
     value.startsWith('data:')
   );
 }
@@ -634,8 +634,8 @@ export async function uploadMediaFile(
           )
             ? 'mp3'
             : file.type.startsWith(
-                'video/'
-              )
+              'video/'
+            )
               ? 'mp4'
               : 'webp'
         );
@@ -643,12 +643,12 @@ export async function uploadMediaFile(
       const uniqueId =
         typeof crypto !==
           'undefined' &&
-        typeof crypto.randomUUID ===
+          typeof crypto.randomUUID ===
           'function'
           ? crypto.randomUUID()
           : `${Date.now()}_${Math.random()
-              .toString(36)
-              .slice(2, 9)}`;
+            .toString(36)
+            .slice(2, 9)}`;
 
       /**
        * If birthday-videos bucket does not exist,
@@ -656,7 +656,7 @@ export async function uploadMediaFile(
        */
       const targetBucket =
         bucketName ===
-        'birthday-videos'
+          'birthday-videos'
           ? 'birthday-images'
           : bucketName;
 
@@ -909,7 +909,7 @@ export function decodeBirthdayFromUrlPayload(
         Array.isArray(
           object.m
         ) &&
-        object.m.length > 0
+          object.m.length > 0
           ? object.m
           : SAMPLE_BIRTHDAY.memory_image_urls,
 
@@ -952,33 +952,33 @@ export function decodeBirthdayFromUrlPayload(
           object.sd
         )
           ? object.sd.map(
-              (
-                story: {
-                  id?: string;
-                  t?: string;
-                  st?: string;
-                  d?: string;
-                }
-              ) => ({
-                id:
-                  story.id ||
-                  String(
-                    Math.random()
-                  ),
+            (
+              story: {
+                id?: string;
+                t?: string;
+                st?: string;
+                d?: string;
+              }
+            ) => ({
+              id:
+                story.id ||
+                String(
+                  Math.random()
+                ),
 
-                title:
-                  story.t ||
-                  '',
+              title:
+                story.t ||
+                '',
 
-                subtitle:
-                  story.st ||
-                  '',
+              subtitle:
+                story.st ||
+                '',
 
-                description:
-                  story.d ||
-                  '',
-              })
-            )
+              description:
+                story.d ||
+                '',
+            })
+          )
           : SAMPLE_BIRTHDAY.story_data,
 
       music_url:
@@ -1428,8 +1428,8 @@ export async function createBirthday(
 
     memory_image_urls:
       input.memory_image_urls &&
-      input.memory_image_urls
-        .length > 0
+        input.memory_image_urls
+          .length > 0
         ? input.memory_image_urls
         : SAMPLE_BIRTHDAY.memory_image_urls,
 
@@ -1707,7 +1707,7 @@ export async function updateBirthday(
     getLocalBirthdays().map(
       (birthday) =>
         birthday.id ===
-        id
+          id
           ? saved
           : birthday
     );
@@ -1773,9 +1773,9 @@ export async function deleteBirthday(
     getLocalBirthdays().filter(
       (birthday) =>
         birthday.id !==
-          id &&
+        id &&
         birthday.slug !==
-          id
+        id
     );
 
   saveLocalBirthdays(

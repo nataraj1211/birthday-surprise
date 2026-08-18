@@ -82,6 +82,7 @@ export interface ThemeConfig {
 
 export interface BirthdayData {
   id: string;
+  user_id?: string;
   slug: string;
   name: string;
   birthday_date: string; // YYYY-MM-DD
@@ -104,6 +105,7 @@ export interface BirthdayData {
 }
 
 export interface BirthdayFormInput {
+  user_id?: string;
   name: string;
   birthday_date: string;
   sender_name: string;

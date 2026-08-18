@@ -1,5 +1,6 @@
 -- ==============================================================================
 -- BIRTHDAY BLOOM – PRODUCTION SUPABASE DATABASE & STORAGE SCHEMA
+-- Multi-User Authentication, Row Level Security (RLS) & User Ownership
 -- ==============================================================================
 
 -- Enable UUID extension if not already available
@@ -8,6 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 1. Create the main birthday surprises table
 CREATE TABLE IF NOT EXISTS public.birthday_surprises (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   slug TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
   birthday_date DATE NOT NULL,
@@ -29,7 +31,8 @@ CREATE TABLE IF NOT EXISTS public.birthday_surprises (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Ensure all columns exist (in case table was created with default Supabase template)
+-- Ensure all columns exist (safe non-destructive updates for existing databases)
+ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS slug TEXT UNIQUE;
 ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS birthday_date DATE;
@@ -51,8 +54,8 @@ ALTER TABLE public.birthday_surprises ADD COLUMN IF NOT EXISTS updated_at TIMEST
 
 -- 2. Performance & Lookup Indexes
 CREATE UNIQUE INDEX IF NOT EXISTS birthday_surprises_slug_idx ON public.birthday_surprises (slug);
+CREATE INDEX IF NOT EXISTS birthday_surprises_user_id_idx ON public.birthday_surprises (user_id);
 CREATE INDEX IF NOT EXISTS birthday_surprises_created_at_idx ON public.birthday_surprises (created_at DESC);
-
 
 -- 3. Automatic Updated_At Timestamp Trigger
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
@@ -72,39 +75,94 @@ CREATE TRIGGER set_birthday_surprises_updated_at
 -- 4. Enable Row Level Security (RLS)
 ALTER TABLE public.birthday_surprises ENABLE ROW LEVEL SECURITY;
 
--- 5. Public RLS Policies for Birthday Bloom
-
--- Allow any visitor to view published birthday surprises by slug / id
+-- 5. Clean up any legacy public policies
 DROP POLICY IF EXISTS "Allow public read access to birthday surprises" ON public.birthday_surprises;
-CREATE POLICY "Allow public read access to birthday surprises"
+DROP POLICY IF EXISTS "Allow public insert to birthday surprises" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Allow public update to birthday surprises" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Allow public delete to birthday surprises" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Users can read own birthdays" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Users can insert own birthdays" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Users can update own birthdays" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Users can delete own birthdays" ON public.birthday_surprises;
+DROP POLICY IF EXISTS "Public can view single surprise by slug" ON public.birthday_surprises;
+
+-- 6. User Isolation Policies (Strict Dashboard & Management Security)
+-- Authenticated users can SELECT only their own birthday records
+CREATE POLICY "Users can read own birthdays"
   ON public.birthday_surprises
   FOR SELECT
-  USING (true);
+  TO authenticated
+  USING (auth.uid() = user_id);
 
--- Allow public creation of birthday surprises
-DROP POLICY IF EXISTS "Allow public insert to birthday surprises" ON public.birthday_surprises;
-CREATE POLICY "Allow public insert to birthday surprises"
+-- Authenticated users can INSERT only records with their own user_id
+CREATE POLICY "Users can insert own birthdays"
   ON public.birthday_surprises
   FOR INSERT
-  WITH CHECK (true);
+  TO authenticated
+  WITH CHECK (auth.uid() = user_id);
 
--- Allow public updates to existing surprises
-DROP POLICY IF EXISTS "Allow public update to birthday surprises" ON public.birthday_surprises;
-CREATE POLICY "Allow public update to birthday surprises"
+-- Authenticated users can UPDATE only their own birthday records
+CREATE POLICY "Users can update own birthdays"
   ON public.birthday_surprises
   FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+  TO authenticated
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
 
--- Allow public deletion of surprises
-DROP POLICY IF EXISTS "Allow public delete to birthday surprises" ON public.birthday_surprises;
-CREATE POLICY "Allow public delete to birthday surprises"
+-- Authenticated users can DELETE only their own birthday records
+CREATE POLICY "Users can delete own birthdays"
   ON public.birthday_surprises
   FOR DELETE
-  USING (true);
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+-- 7. Public Surprise Access via Secure RPC Function
+-- Enables anyone with a valid share URL /birthday/:slug to view only that specific birthday surprise
+-- without exposing user_id or granting table-wide SELECT permissions to anonymous users.
+CREATE OR REPLACE FUNCTION public.get_public_birthday_by_slug(lookup_slug TEXT)
+RETURNS TABLE (
+  id UUID,
+  slug TEXT,
+  name TEXT,
+  birthday_date DATE,
+  sender_name TEXT,
+  profile_image_url TEXT,
+  memory_image_urls JSONB,
+  intro_text TEXT,
+  birthday_message TEXT,
+  music_url TEXT,
+  theme_id TEXT,
+  relationship_type TEXT,
+  experience_type TEXT,
+  design_id TEXT,
+  relationship_role TEXT,
+  nickname TEXT,
+  custom_ending_message TEXT,
+  story_data JSONB,
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT 
+    id, slug, name, birthday_date, sender_name, profile_image_url, 
+    memory_image_urls, intro_text, birthday_message, music_url, 
+    theme_id, relationship_type, experience_type, design_id, 
+    relationship_role, nickname, custom_ending_message, story_data, 
+    created_at, updated_at
+  FROM public.birthday_surprises 
+  WHERE slug = lookup_slug 
+  LIMIT 1;
+$$;
+
+-- Grant execution permission to public visitors (anon) and authenticated users
+REVOKE ALL ON FUNCTION public.get_public_birthday_by_slug(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_public_birthday_by_slug(TEXT) TO anon, authenticated;
 
 -- ==============================================================================
--- 6. SUPABASE STORAGE BUCKETS CONFIGURATION
+-- 8. SUPABASE STORAGE BUCKETS CONFIGURATION
 -- ==============================================================================
 
 -- Create public storage buckets for media assets
@@ -123,15 +181,10 @@ CREATE POLICY "Public Read Birthday Images"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'birthday-images');
 
-DROP POLICY IF EXISTS "Public Insert Birthday Images" ON storage.objects;
-CREATE POLICY "Public Insert Birthday Images"
+DROP POLICY IF EXISTS "Authenticated Insert Birthday Images" ON storage.objects;
+CREATE POLICY "Authenticated Insert Birthday Images"
   ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'birthday-images');
-
-DROP POLICY IF EXISTS "Public Update Birthday Images" ON storage.objects;
-CREATE POLICY "Public Update Birthday Images"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'birthday-images')
+  TO authenticated, anon
   WITH CHECK (bucket_id = 'birthday-images');
 
 DROP POLICY IF EXISTS "Public Read Birthday Music" ON storage.objects;
@@ -139,13 +192,8 @@ CREATE POLICY "Public Read Birthday Music"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'birthday-music');
 
-DROP POLICY IF EXISTS "Public Insert Birthday Music" ON storage.objects;
-CREATE POLICY "Public Insert Birthday Music"
+DROP POLICY IF EXISTS "Authenticated Insert Birthday Music" ON storage.objects;
+CREATE POLICY "Authenticated Insert Birthday Music"
   ON storage.objects FOR INSERT
-  WITH CHECK (bucket_id = 'birthday-music');
-
-DROP POLICY IF EXISTS "Public Update Birthday Music" ON storage.objects;
-CREATE POLICY "Public Update Birthday Music"
-  ON storage.objects FOR UPDATE
-  USING (bucket_id = 'birthday-music')
+  TO authenticated, anon
   WITH CHECK (bucket_id = 'birthday-music');

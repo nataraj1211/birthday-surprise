@@ -1,31 +1,35 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { PlusCircle, ExternalLink, QrCode, Edit, Trash2, Calendar, Sparkles, Heart } from 'lucide-react';
+import { PlusCircle, ExternalLink, QrCode, Edit, Trash2, Calendar, Sparkles, Heart, ShieldCheck } from 'lucide-react';
 import type { BirthdayData } from '../types/birthday';
 import { getAllBirthdays, deleteBirthday, getBirthdayShareUrl } from '../services/birthdayService';
 import { getThemeById } from '../config/themes';
 import { ShareModal } from '../components/create/ShareModal';
+import { useAuth } from '../context/useAuth';
 
 export const DashboardPage: React.FC = () => {
+  const { user } = useAuth();
   const [birthdays, setBirthdays] = useState<BirthdayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedBirthdayForQR, setSelectedBirthdayForQR] = useState<BirthdayData | null>(null);
 
-  useEffect(() => {
-    loadBirthdays();
-  }, []);
-
-  const loadBirthdays = async () => {
+  const loadBirthdays = useCallback(async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      const data = await getAllBirthdays();
+      // Strictly load ONLY this user's private birthday records
+      const data = await getAllBirthdays(user.id);
       setBirthdays(data);
     } catch (err) {
       console.error('Error loading birthdays:', err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    loadBirthdays();
+  }, [loadBirthdays]);
 
   const handleDelete = async (id: string, name: string) => {
     if (window.confirm(`Are you sure you want to delete the birthday surprise for "${name}"?`)) {
@@ -38,19 +42,23 @@ export const DashboardPage: React.FC = () => {
     <div className="min-h-screen bg-slate-50 py-12 px-4">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-pink-100 shadow-xl shadow-pink-500/5">
-          <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-pink-100 shadow-xl shadow-pink-500/5">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-pink-700 text-xs font-bold mb-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
+              <span>Private Dashboard • {user?.email}</span>
+            </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
               Your Birthday Surprises 🎉
             </h1>
-            <p className="text-slate-500 text-sm font-medium mt-1">
+            <p className="text-slate-500 text-sm font-medium">
               Manage your created surprise experiences, access QR codes, and edit messages.
             </p>
           </div>
 
           <Link
             to="/create"
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-extrabold text-sm flex items-center gap-2 shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-extrabold text-sm flex items-center gap-2 shadow-lg shadow-pink-500/25 transition-transform hover:scale-105 flex-shrink-0"
           >
             <PlusCircle className="w-5 h-5" />
             <span>Create New Birthday +</span>
@@ -61,7 +69,7 @@ export const DashboardPage: React.FC = () => {
         {isLoading ? (
           <div className="text-center py-20">
             <div className="w-12 h-12 rounded-full border-4 border-pink-200 border-t-pink-500 animate-spin mx-auto mb-3" />
-            <p className="text-slate-500 font-semibold">Loading your birthday pages...</p>
+            <p className="text-slate-500 font-semibold">Loading your private birthday pages...</p>
           </div>
         ) : birthdays.length === 0 ? (
           <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-md space-y-4 max-w-lg mx-auto">
@@ -72,7 +80,7 @@ export const DashboardPage: React.FC = () => {
             </p>
             <Link
               to="/create"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pink-500 text-white font-bold text-sm shadow-md shadow-pink-500/20"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-pink-500 text-white font-bold text-sm shadow-md shadow-pink-500/20 hover:bg-pink-600 transition-colors"
             >
               <PlusCircle className="w-4 h-4" /> Create Birthday Surprise
             </Link>
@@ -193,4 +201,3 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
-

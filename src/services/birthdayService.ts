@@ -6,11 +6,11 @@ import type {
 } from '../types/birthday';
 import { SAMPLE_BIRTHDAY } from '../config/defaultData';
 
-const LOCAL_STORAGE_KEY = 'birthday_surprises_bloom_store';
+const LOCAL_STORAGE_BASE_KEY = 'birthday_surprises_bloom_store';
 
 /**
  * ============================================================
- * PRODUCTION URL
+ * PRODUCTION URL & CONSTANTS
  * ============================================================
  */
 export const PRODUCTION_ORIGIN =
@@ -39,6 +39,22 @@ export function getBirthdayShareUrl(birthday: BirthdayData): string {
  */
 export function getBirthdayUrl(birthday: BirthdayData): string {
   return getBirthdayShareUrl(birthday);
+}
+
+/**
+ * ============================================================
+ * AUTHENTICATED USER HELPER
+ * ============================================================
+ */
+
+export async function getCurrentUserId(): Promise<string | null> {
+  if (!isSupabaseConfigured || !supabase) return null;
+  try {
+    const { data } = await supabase.auth.getUser();
+    return data.user?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -142,6 +158,7 @@ function normalizeBirthdayRecord(
 
   return {
     id: String(raw.id || ''),
+    user_id: raw.user_id ? String(raw.user_id) : undefined,
     slug: String(raw.slug || ''),
     name: String(raw.name || ''),
     birthday_date: String(raw.birthday_date || ''),
@@ -197,7 +214,6 @@ export async function compressImageFile(
       image.onload = () => {
         let width = image.width;
         let height = image.height;
-
         if (width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
@@ -238,13 +254,21 @@ function isDataUrl(value: string): boolean {
 
 /**
  * ============================================================
- * LOCAL STORAGE STORAGE & CACHE
+ * LOCAL STORAGE NAMESPACING & CACHE
  * ============================================================
  */
 
-export function getLocalBirthdays(): BirthdayData[] {
+function getStorageKey(userId?: string | null): string {
+  if (userId) {
+    return `${LOCAL_STORAGE_BASE_KEY}_${userId}`;
+  }
+  return LOCAL_STORAGE_BASE_KEY;
+}
+
+export function getLocalBirthdays(userId?: string | null): BirthdayData[] {
   try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const key = getStorageKey(userId);
+    const raw = localStorage.getItem(key);
     if (!raw) {
       return [SAMPLE_BIRTHDAY];
     }
@@ -259,12 +283,17 @@ export function getLocalBirthdays(): BirthdayData[] {
   }
 }
 
-export function saveLocalBirthdays(birthdays: BirthdayData[]): void {
+export function saveLocalBirthdays(
+  birthdays: BirthdayData[],
+  userId?: string | null
+): void {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(birthdays));
+    const key = getStorageKey(userId);
+    localStorage.setItem(key, JSON.stringify(birthdays));
   } catch (err) {
     console.warn('LocalStorage quota exceeded, attempting pruned save', err);
     try {
+      const key = getStorageKey(userId);
       const pruned = birthdays.map((b) => ({
         ...b,
         profile_image_url: isDataUrl(b.profile_image_url) ? '' : b.profile_image_url,
@@ -273,10 +302,19 @@ export function saveLocalBirthdays(birthdays: BirthdayData[]): void {
         ),
         music_url: isDataUrl(b.music_url || '') ? null : b.music_url,
       }));
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(pruned));
+      localStorage.setItem(key, JSON.stringify(pruned));
     } catch (secondError) {
       console.error('Failed to save local birthdays:', secondError);
     }
+  }
+}
+
+export function clearUserLocalBirthdays(userId?: string | null): void {
+  try {
+    const key = getStorageKey(userId);
+    localStorage.removeItem(key);
+  } catch (err) {
+    console.warn('Failed to clear user local storage:', err);
   }
 }
 
@@ -487,13 +525,14 @@ export async function getBirthdayById(
     }
   }
 
-  const locals = getLocalBirthdays();
+  const userId = await getCurrentUserId();
+  const locals = getLocalBirthdays(userId);
   return locals.find((birthday) => birthday.id === id) || null;
 }
 
 /**
  * ============================================================
- * GET BIRTHDAY BY SLUG
+ * GET BIRTHDAY BY SLUG (PUBLIC BIRTHDAY ACCESS)
  * ============================================================
  */
 
@@ -505,11 +544,24 @@ export async function getBirthdayBySlug(
     return null;
   }
 
-  if (SAMPLE_BIRTHDAY.slug === cleanSlug) {
+  if (SAMPLE_BIRTHDAY.slug === cleanSlug || cleanSlug === 'demo' || cleanSlug === '7xK92Lm') {
     return SAMPLE_BIRTHDAY;
   }
 
   if (isSupabaseConfigured && supabase) {
+    // 1. Try secure RPC function first (Security Definer for public slug lookups)
+    try {
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('get_public_birthday_by_slug', { lookup_slug: cleanSlug });
+
+      if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+        return normalizeBirthdayRecord(rpcData[0]);
+      }
+    } catch {
+      // Fall through to direct select fallback
+    }
+
+    // 2. Direct select fallback
     try {
       const { data, error } = await supabase
         .from('birthday_surprises')
@@ -529,24 +581,30 @@ export async function getBirthdayBySlug(
     }
   }
 
-  const locals = getLocalBirthdays();
+  // Fallback to local cache lookup
+  const locals = getLocalBirthdays(null);
   return locals.find((birthday) => birthday.slug === cleanSlug) || null;
 }
 
 /**
  * ============================================================
- * GET ALL BIRTHDAYS
+ * GET ALL BIRTHDAYS (STRICT USER ISOLATION)
  * ============================================================
  */
 
-export async function getAllBirthdays(): Promise<BirthdayData[]> {
+export async function getAllBirthdays(userId?: string | null): Promise<BirthdayData[]> {
   let supabaseBirthdays: BirthdayData[] = [];
 
-  if (isSupabaseConfigured && supabase) {
+  // Determine the target user ID from argument or active session
+  const activeUserId = userId !== undefined ? userId : await getCurrentUserId();
+
+  if (isSupabaseConfigured && supabase && activeUserId) {
     try {
+      // Strict User Isolation: Query ONLY birthdays belonging to this specific authenticated user
       const { data, error } = await supabase
         .from('birthday_surprises')
         .select('*')
+        .eq('user_id', activeUserId)
         .order('created_at', { ascending: false });
 
       if (!error && data) {
@@ -556,17 +614,23 @@ export async function getAllBirthdays(): Promise<BirthdayData[]> {
       }
 
       if (error) {
-        console.warn('Supabase fetch all failed:', error);
+        console.warn('Supabase fetch user birthdays failed:', error);
       }
     } catch (error) {
-      console.warn('Supabase fetch all exception:', error);
+      console.warn('Supabase fetch user birthdays exception:', error);
     }
   }
 
-  const localBirthdays = getLocalBirthdays();
+  // Fetch only this user's local cached records
+  const localBirthdays = getLocalBirthdays(activeUserId);
   const map = new Map<string, BirthdayData>();
 
-  [...localBirthdays, ...supabaseBirthdays].forEach((birthday) => {
+  // Filter out default sample birthday if real user has created records
+  const allItems = [...localBirthdays, ...supabaseBirthdays].filter(
+    (b) => b && (b.id !== SAMPLE_BIRTHDAY.id || (localBirthdays.length === 1 && supabaseBirthdays.length === 0))
+  );
+
+  allItems.forEach((birthday) => {
     if (birthday.slug) {
       map.set(birthday.slug, birthday);
     }
@@ -580,7 +644,7 @@ export async function getAllBirthdays(): Promise<BirthdayData[]> {
 
 /**
  * ============================================================
- * CREATE BIRTHDAY
+ * CREATE BIRTHDAY (USER OWNERSHIP ENFORCED)
  * ============================================================
  */
 
@@ -593,6 +657,14 @@ export async function createBirthday(
     );
   }
 
+  // Enforce authenticated user ownership from active session
+  const currentUserId = input.user_id || (await getCurrentUserId());
+  if (!currentUserId) {
+    throw new Error(
+      'Authentication required: You must be logged in to create and publish a birthday surprise.'
+    );
+  }
+
   const slug = await generateUniqueSlug();
   const now = new Date().toISOString();
   const rel = (input.relationship_type ||
@@ -600,6 +672,7 @@ export async function createBirthday(
     'girlfriend') as ExperienceType;
 
   const recordToInsert = {
+    user_id: currentUserId,
     slug,
     name: input.name,
     birthday_date: input.birthday_date,
@@ -640,11 +713,14 @@ export async function createBirthday(
   }
 
   const saved = normalizeBirthdayRecord(data);
-  const locals = getLocalBirthdays();
-  saveLocalBirthdays([
-    saved,
-    ...locals.filter((birthday) => birthday.slug !== saved.slug),
-  ]);
+  const locals = getLocalBirthdays(currentUserId);
+  saveLocalBirthdays(
+    [
+      saved,
+      ...locals.filter((birthday) => birthday.slug !== saved.slug && birthday.id !== SAMPLE_BIRTHDAY.id),
+    ],
+    currentUserId
+  );
 
   return saved;
 }
@@ -665,6 +741,7 @@ export async function updateBirthday(
     );
   }
 
+  const currentUserId = input.user_id || (await getCurrentUserId());
   const existing = await getBirthdayById(id);
   if (!existing) {
     throw new Error('Birthday record was not found.');
@@ -712,10 +789,10 @@ export async function updateBirthday(
   }
 
   const saved = normalizeBirthdayRecord(data);
-  const locals = getLocalBirthdays().map((birthday) =>
+  const locals = getLocalBirthdays(currentUserId).map((birthday) =>
     birthday.id === id ? saved : birthday
   );
-  saveLocalBirthdays(locals);
+  saveLocalBirthdays(locals, currentUserId);
 
   return saved;
 }
@@ -727,6 +804,8 @@ export async function updateBirthday(
  */
 
 export async function deleteBirthday(id: string): Promise<boolean> {
+  const currentUserId = await getCurrentUserId();
+
   if (isSupabaseConfigured && supabase) {
     try {
       const { error } = await supabase
@@ -744,9 +823,9 @@ export async function deleteBirthday(id: string): Promise<boolean> {
     }
   }
 
-  const locals = getLocalBirthdays().filter(
+  const locals = getLocalBirthdays(currentUserId).filter(
     (birthday) => birthday.id !== id && birthday.slug !== id
   );
-  saveLocalBirthdays(locals);
+  saveLocalBirthdays(locals, currentUserId);
   return true;
 }

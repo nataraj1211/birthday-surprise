@@ -15,8 +15,10 @@ import { StepThemeSelector } from '../components/create/StepThemeSelector';
 import { StepMusic } from '../components/create/StepMusic';
 import { StepLivePreview } from '../components/create/StepLivePreview';
 import { ShareModal } from '../components/create/ShareModal';
+import { useAuth } from '../context/useAuth';
 
 export const CreateBirthdayPage: React.FC = () => {
+  const { user } = useAuth();
   const { id } = useParams<{ id?: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -133,11 +135,16 @@ export const CreateBirthdayPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      const payload: BirthdayFormInput = {
+        ...formData,
+        user_id: user?.id,
+      };
+
       if (id) {
-        const updated = await updateBirthday(id, formData);
+        const updated = await updateBirthday(id, payload);
         setCreatedBirthday(updated);
       } else {
-        const created = await createBirthday(formData);
+        const created = await createBirthday(payload);
         setCreatedBirthday(created);
       }
     } catch (err: unknown) {

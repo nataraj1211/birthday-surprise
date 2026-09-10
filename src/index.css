@@ -97,9 +97,13 @@
   animation: shimmer 5s linear infinite;
 }
 
-/* Safe area support for iOS devices */
-.safe-pb {
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+/* Safe area support for iOS and Android devices */
+.safe-pb, .pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
+.safe-pt, .pt-safe {
+  padding-top: max(env(safe-area-inset-top, 0px), 16px);
 }
 
 /* Floating Red Hearts Animation */
@@ -129,31 +133,50 @@
 }
 
 /* ==========================================================================
-   Comprehensive Mobile Media Queries (<640px and <380px)
+   Comprehensive Mobile App Responsiveness (<768px, <640px, <380px)
    ========================================================================== */
 
-/* 1. Universal Mobile Breakpoint (<640px / Phones) */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 1. Universal Mobile Breakpoint (<768px / Tablets & Phones) */
+@media (max-width: 768px) {
+  html, body {
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: auto;
+    overscroll-behavior-x: none;
+  }
+
+  /* Prevent iOS auto-zoom when tapping inputs */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* 2. Standard Mobile Phone Breakpoint (<640px / Phones) */
 @media (max-width: 640px) {
   html, body {
     font-size: 14px;
     overflow-x: hidden !important;
-    width: 100vw;
+    width: 100%;
+    max-width: 100vw;
     -webkit-overflow-scrolling: touch;
   }
 
   /* Responsive Headings Scaling */
   h1 {
-    font-size: clamp(1.5rem, 6vw, 2.25rem) !important;
+    font-size: clamp(1.4rem, 5.8vw, 2.25rem) !important;
     line-height: 1.2 !important;
   }
 
   h2 {
-    font-size: clamp(1.25rem, 5vw, 1.75rem) !important;
+    font-size: clamp(1.2rem, 4.8vw, 1.75rem) !important;
     line-height: 1.25 !important;
   }
 
   h3 {
-    font-size: clamp(1.1rem, 4vw, 1.4rem) !important;
+    font-size: clamp(1.05rem, 4vw, 1.35rem) !important;
   }
 
   /* Prevent any box from bursting container */
@@ -174,14 +197,14 @@
 
   /* Modals on mobile devices */
   .mobile-modal-full {
-    max-height: 96vh !important;
-    width: 98vw !important;
-    margin: auto 0.5rem !important;
+    max-height: 94vh !important;
+    width: 96vw !important;
+    margin: auto !important;
     border-radius: 1.25rem !important;
   }
 }
 
-/* 2. Compact Mobile Phones Breakpoint (<380px e.g. iPhone SE / Galaxy Mini) */
+/* 3. Compact Mobile Phones Breakpoint (<380px e.g. iPhone SE / Galaxy Mini) */
 @media (max-width: 380px) {
   html, body {
     font-size: 13px;
@@ -206,7 +229,7 @@
   }
 }
 
-/* 3. Touch Screen Device Optimizations (Phones & Tablets) */
+/* 4. Touch Screen Device Optimizations (Phones & Tablets) */
 @media (hover: none) and (pointer: coarse) {
   /* Remove sticky hover effects that get stuck on touch devices */
   .hover\:scale-105:hover {
@@ -218,9 +241,13 @@
   }
 
   /* Smooth momentum scrolling for carousels and tabs */
-  .no-scrollbar {
+  .no-scrollbar, .scrollbar-none {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar, .scrollbar-none::-webkit-scrollbar {
+    display: none;
   }
 }
 

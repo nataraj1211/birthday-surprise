@@ -20,7 +20,7 @@ export const IntroScreen: React.FC<Props> = ({ birthday, theme, onOpen }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 text-center transition-all duration-700 select-none overflow-hidden"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-6 text-center transition-all duration-700 select-none overflow-y-auto pt-safe pb-safe"
       style={{
         background: theme.colors.bgGradient,
         color: theme.colors.text,

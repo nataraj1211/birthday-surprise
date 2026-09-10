@@ -24,36 +24,36 @@ export const LandingPage: React.FC = () => {
         {/* Glowing Background Orbs */}
         <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-gradient-to-tr from-pink-300/40 via-purple-300/30 to-amber-200/40 blur-3xl -z-10 rounded-full animate-pulse-glow" />
 
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-100/80 border border-pink-200 text-pink-700 text-xs font-extrabold uppercase tracking-widest shadow-sm">
-            <Sparkles className="w-4 h-4 text-pink-500" />
+        <div className="max-w-4xl mx-auto text-center space-y-6 sm:space-y-8">
+          <div className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full bg-pink-100/80 border border-pink-200 text-pink-700 text-[11px] sm:text-xs font-extrabold uppercase tracking-widest shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-500" />
             <span>40 Unique Birthday Website Experiences</span>
           </div>
 
-          <h1 className="text-4xl sm:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
+          <h1 className="text-3xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
             BIRTHDAY BLOOM
           </h1>
 
-          <p className="text-xl sm:text-3xl font-extrabold shimmer-text max-w-2xl mx-auto">
+          <p className="text-lg sm:text-2xl md:text-3xl font-extrabold shimmer-text max-w-2xl mx-auto px-2">
             "Create a little surprise. Share a beautiful memory. 💕"
           </p>
 
-          <p className="text-base sm:text-xl text-slate-600 max-w-xl mx-auto font-medium leading-relaxed">
+          <p className="text-sm sm:text-lg md:text-xl text-slate-600 max-w-xl mx-auto font-medium leading-relaxed px-2">
             Create an unforgettable, personalized birthday experience in minutes with 40 bespoke designs for every relationship.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2 w-full max-w-md mx-auto sm:max-w-none">
             <Link
               to="/create"
-              className="w-full sm:w-auto px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-extrabold text-lg shadow-xl shadow-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-extrabold text-base sm:text-lg shadow-xl shadow-pink-500/30 hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Create Birthday Surprise ✨</span>
             </Link>
 
             <Link
               to="/designs"
-              className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-slate-700 font-extrabold text-base border border-slate-200 shadow-md hover:bg-slate-50 hover:border-pink-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-7 sm:px-8 py-3.5 sm:py-4 rounded-full bg-white text-slate-700 font-extrabold text-sm sm:text-base border border-slate-200 shadow-md hover:bg-slate-50 hover:border-pink-300 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <Layers className="w-4 h-4 text-pink-500" />
               <span>Explore All 40 Designs</span>
@@ -62,20 +62,22 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* HERO ANIMATED MOCKUP PREVIEW */}
-        <div className="mt-14 max-w-3xl mx-auto px-2">
-          <div className="relative rounded-[40px] border-8 border-slate-900 shadow-2xl overflow-hidden bg-white group">
+        <div className="mt-10 sm:mt-14 max-w-3xl mx-auto px-1 sm:px-2">
+          <div className="relative rounded-2xl sm:rounded-[40px] border-4 sm:border-8 border-slate-900 shadow-2xl overflow-hidden bg-white group">
             {/* Top Device Bar */}
-            <div className="bg-slate-900 px-6 py-2.5 flex items-center justify-between text-white text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-pink-400">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+            <div className="bg-slate-900 px-3.5 sm:px-6 py-2 sm:py-2.5 flex items-center justify-between text-white text-[11px] sm:text-xs font-semibold gap-2">
+              <span className="flex items-center gap-1.5 text-pink-400 flex-shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 Live Surprise Preview
               </span>
-              <span className="text-slate-400">birthdaybloom.com/birthday/7xK92Lm</span>
+              <span className="text-slate-400 truncate max-w-[150px] sm:max-w-none">
+                birthdaybloom.com/birthday/7xK92Lm
+              </span>
             </div>
 
             {/* Mockup Frame Content */}
             <div
-              className="p-8 sm:p-12 text-center space-y-6"
+              className="p-4 sm:p-12 text-center space-y-4 sm:space-y-6"
               style={{ background: sampleTheme.colors.bgGradient, color: sampleTheme.colors.text }}
             >
               <BirthdayHero birthday={SAMPLE_BIRTHDAY} theme={sampleTheme} />
@@ -83,7 +85,7 @@ export const LandingPage: React.FC = () => {
               <div className="pt-2">
                 <Link
                   to="/birthday/demo"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold text-white shadow-xl transition-all hover:scale-105"
+                  className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-bold text-white shadow-xl transition-all hover:scale-105 active:scale-95"
                   style={{ background: sampleTheme.colors.buttonBg }}
                 >
                   <Gift className="w-4 h-4" /> Open Full Interactive Surprise
@@ -152,20 +154,20 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* 8 Birthday Experience Types Banner - Clickable Cards! */}
-        <div className="mt-16 p-8 sm:p-10 rounded-[36px] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white space-y-8 shadow-2xl border border-white/10">
+        <div className="mt-12 sm:mt-16 p-4 sm:p-10 rounded-3xl sm:rounded-[36px] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white space-y-6 sm:space-y-8 shadow-2xl border border-white/10">
           <div className="text-center space-y-2 max-w-xl mx-auto">
-            <span className="inline-block text-xs font-black uppercase tracking-widest text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/30">
+            <span className="inline-block text-[11px] sm:text-xs font-black uppercase tracking-widest text-pink-400 bg-pink-500/10 px-3 py-1 rounded-full border border-pink-500/30">
               Interactive Relationship Modules
             </span>
             <h3 className="text-2xl sm:text-4xl font-black">
               Tailored For Exactly Who They Are ✨
             </h3>
-            <p className="text-sm text-slate-400 font-medium">
+            <p className="text-xs sm:text-sm text-slate-400 font-medium">
               Click any relationship below to explore 5 unique, dedicated birthday designs.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
             {[
               { id: 'girlfriend', emoji: '❤️', title: 'Girlfriend / Lover', mood: '5 Romantic Designs', img: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?auto=format&fit=crop&w=400&q=80' },
               { id: 'parents', emoji: '👨‍👩‍👦', title: 'Parents', mood: '5 Legacy Designs', img: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=400&q=80' },
@@ -180,10 +182,10 @@ export const LandingPage: React.FC = () => {
                 key={exp.id}
                 type="button"
                 onClick={() => setSelectedRelForModal(exp.id as RelationshipType)}
-                className="group relative rounded-2xl overflow-hidden bg-slate-800/80 hover:bg-slate-800 border border-white/10 hover:border-pink-500/60 p-3 sm:p-4 space-y-2.5 transition-all text-left cursor-pointer transform hover:-translate-y-1 hover:shadow-xl shadow-md flex flex-col justify-between"
+                className="group relative rounded-xl sm:rounded-2xl overflow-hidden bg-slate-800/80 hover:bg-slate-800 border border-white/10 hover:border-pink-500/60 p-2 sm:p-4 space-y-2 transition-all text-left cursor-pointer transform hover:-translate-y-1 hover:shadow-xl shadow-md flex flex-col justify-between"
               >
                 {/* Thumbnail Image Header */}
-                <div className="relative h-24 sm:h-28 w-full rounded-xl overflow-hidden bg-slate-900">
+                <div className="relative h-20 sm:h-28 w-full rounded-lg sm:rounded-xl overflow-hidden bg-slate-900">
                   <img
                     src={exp.img}
                     alt={exp.title}
@@ -191,33 +193,33 @@ export const LandingPage: React.FC = () => {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
-                  <span className="absolute top-2 left-2 text-xl drop-shadow-md">{exp.emoji}</span>
-                  <span className="absolute bottom-1.5 left-2 text-[9px] font-black uppercase tracking-wider text-pink-300 bg-black/60 px-2 py-0.5 rounded-full border border-pink-500/30">
+                  <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 text-base sm:text-xl drop-shadow-md">{exp.emoji}</span>
+                  <span className="absolute bottom-1.5 left-1.5 sm:left-2 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-pink-300 bg-black/60 px-1.5 sm:px-2 py-0.5 rounded-full border border-pink-500/30">
                     5 Designs
                   </span>
                 </div>
 
-                <div className="space-y-0.5">
-                  <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-pink-300 transition-colors truncate">
+                <div className="space-y-0.5 min-w-0">
+                  <h4 className="text-[11px] sm:text-sm font-bold text-white group-hover:text-pink-300 transition-colors truncate">
                     {exp.title}
                   </h4>
-                  <p className="text-[11px] text-slate-300/80 font-medium truncate">
+                  <p className="text-[9px] sm:text-[11px] text-slate-300/80 font-medium truncate">
                     {exp.mood}
                   </p>
                 </div>
 
-                <span className="text-[10px] font-bold text-pink-400 group-hover:text-white flex items-center justify-between pt-1 border-t border-white/10">
+                <span className="text-[9px] sm:text-[10px] font-bold text-pink-400 group-hover:text-white flex items-center justify-between pt-1 border-t border-white/10">
                   <span>Explore</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                  <ArrowRight className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 transition-transform" />
                 </span>
               </button>
             ))}
           </div>
 
-          <div className="text-center pt-2">
+          <div className="text-center pt-1 sm:pt-2">
             <Link
               to="/designs"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-black border border-white/20 transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-black border border-white/20 transition-all hover:scale-105 active:scale-95"
             >
               <Layers className="w-4 h-4 text-pink-400" />
               <span>Explore All 40 Designs Catalog</span>

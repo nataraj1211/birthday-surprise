@@ -39,28 +39,28 @@ export const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12 px-4">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-slate-50 py-6 sm:py-12 px-3 sm:px-4 pb-28 md:pb-12">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-pink-100 shadow-xl shadow-pink-500/5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-5 sm:p-8 rounded-2xl sm:rounded-3xl border border-pink-100 shadow-xl shadow-pink-500/5">
           <div className="space-y-1">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-pink-700 text-xs font-bold mb-1">
               <ShieldCheck className="w-3.5 h-3.5 text-pink-500" />
               <span>Private Dashboard • {user?.email}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900">
+            <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900">
               Your Birthday Surprises 🎉
             </h1>
-            <p className="text-slate-500 text-sm font-medium">
+            <p className="text-slate-500 text-xs sm:text-sm font-medium">
               Manage your created surprise experiences, access QR codes, and edit messages.
             </p>
           </div>
 
           <Link
             to="/create"
-            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-extrabold text-sm flex items-center gap-2 shadow-lg shadow-pink-500/25 transition-transform hover:scale-105 flex-shrink-0"
+            className="w-full sm:w-auto px-5 sm:px-6 py-3 rounded-xl sm:rounded-2xl bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-pink-500/25 transition-transform hover:scale-105 active:scale-95 flex-shrink-0 cursor-pointer"
           >
-            <PlusCircle className="w-5 h-5" />
+            <PlusCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Create New Birthday +</span>
           </Link>
         </div>

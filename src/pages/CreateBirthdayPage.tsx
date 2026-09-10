@@ -161,11 +161,11 @@ export const CreateBirthdayPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 py-6 sm:py-10 px-2 sm:px-4">
-      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8">
+    <div className="min-h-screen bg-slate-50 py-5 sm:py-10 px-2.5 sm:px-4 pb-28 md:pb-12">
+      <div className="max-w-5xl mx-auto space-y-5 sm:space-y-8">
         {/* Header */}
         <div className="text-center space-y-1.5 sm:space-y-2">
-          <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
+          <h1 className="text-xl sm:text-4xl font-extrabold text-slate-900 leading-tight">
             {id ? 'Edit Birthday Surprise 🪄' : 'Create Your Personalized Birthday Experience 🎂'}
           </h1>
           <p className="text-slate-500 text-xs sm:text-sm font-medium">

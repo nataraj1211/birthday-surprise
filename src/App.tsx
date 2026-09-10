@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Navbar } from './components/common/Navbar';
 import { Footer } from './components/common/Footer';
+import { MobileBottomNav } from './components/common/MobileBottomNav';
 import { LandingPage } from './pages/LandingPage';
 import { CreateBirthdayPage } from './pages/CreateBirthdayPage';
 import { DesignSelectionPage } from './pages/DesignSelectionPage';
@@ -16,9 +17,9 @@ export function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="flex flex-col min-h-screen bg-slate-50">
+        <div className="flex flex-col min-h-screen bg-slate-50 overflow-x-hidden w-full max-w-[100vw]">
           <Navbar />
-          <main className="flex-1">
+          <main className="flex-1 w-full max-w-[100vw] overflow-x-hidden">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />
@@ -63,6 +64,7 @@ export function App() {
             </Routes>
           </main>
           <Footer />
+          <MobileBottomNav />
         </div>
       </BrowserRouter>
     </AuthProvider>

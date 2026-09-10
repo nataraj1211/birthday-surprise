@@ -62,16 +62,16 @@ export const Lightbox: React.FC<Props> = ({ images, initialIndex, onClose }) => 
   const ytEmbed = isVideo ? getYouTubeEmbedUrl(currentMedia) : null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-4 transition-all duration-300">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col justify-between p-2 sm:p-4 pt-safe pb-safe transition-all duration-300">
       {/* Top Header */}
-      <div className="flex items-center justify-between text-white p-1 sm:p-2 flex-shrink-0">
+      <div className="flex items-center justify-between text-white px-2 py-2 sm:p-2 flex-shrink-0">
         <span className="text-xs sm:text-sm font-semibold tracking-wider text-pink-300 flex items-center gap-1.5">
           {isVideo && <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-pink-400" />}
           <span>Memory {currentIndex + 1} of {images.length}</span>
         </span>
         <button
           onClick={onClose}
-          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+          className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/15 hover:bg-white/25 active:scale-95 flex items-center justify-center text-white transition-all cursor-pointer"
           aria-label="Close"
         >
           <X className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -80,14 +80,14 @@ export const Lightbox: React.FC<Props> = ({ images, initialIndex, onClose }) => 
 
       {/* Main Media Player Container */}
       <div
-        className="relative flex-1 flex items-center justify-center overflow-hidden my-auto select-none w-full"
+        className="relative flex-1 flex items-center justify-center overflow-hidden my-auto select-none w-full px-1"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
         {images.length > 1 && (
           <button
             onClick={prevImage}
-            className="absolute left-1 sm:left-6 z-20 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-pink-600 text-white flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
+            className="absolute left-1.5 sm:left-6 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/65 hover:bg-pink-600 active:scale-95 text-white flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
             aria-label="Previous"
           >
             <ChevronLeft className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -127,7 +127,7 @@ export const Lightbox: React.FC<Props> = ({ images, initialIndex, onClose }) => 
         {images.length > 1 && (
           <button
             onClick={nextImage}
-            className="absolute right-1 sm:right-6 z-20 w-9 h-9 sm:w-12 sm:h-12 rounded-full bg-black/60 hover:bg-pink-600 text-white flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
+            className="absolute right-1.5 sm:right-6 z-20 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-black/65 hover:bg-pink-600 active:scale-95 text-white flex items-center justify-center transition-all backdrop-blur-md cursor-pointer"
             aria-label="Next"
           >
             <ChevronRight className="w-6 h-6 sm:w-8 sm:h-8" />

@@ -193,10 +193,10 @@ export const LoveLetterRenderer: React.FC<Props> = ({
             whileTap={{ scale: 0.95 }}
             type="button"
             onClick={triggerLetterFinale}
-            className="px-8 py-4 rounded-full bg-gradient-to-r from-amber-800 via-rose-700 to-amber-700 text-white font-sans font-black text-base shadow-xl shadow-amber-900/30 cursor-pointer inline-flex items-center gap-3 transition-all"
+            className="px-6 sm:px-8 py-3.5 sm:py-4 rounded-full bg-gradient-to-r from-amber-800 via-rose-700 to-amber-700 text-white font-sans font-black text-sm sm:text-base shadow-xl shadow-amber-900/30 cursor-pointer inline-flex items-center justify-center gap-2.5 max-w-full text-center transition-all"
           >
-            <Sparkles className="w-5 h-5 animate-spin" />
-            <span>Unfold the Final Handwritten Birthday Message 💌</span>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 animate-spin flex-shrink-0" />
+            <span>Unfold Final Love Letter 💌</span>
           </motion.button>
         ) : (
           <motion.div

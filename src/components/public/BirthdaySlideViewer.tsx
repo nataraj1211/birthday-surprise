@@ -275,43 +275,46 @@ export const BirthdaySlideViewer: React.FC<Props> = ({
         </div>
 
         {/* Current slide indicator pill + view toggle */}
-        <div className="flex items-center justify-between px-2 text-xs font-bold">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-1 sm:px-2 text-xs font-bold gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <span
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider backdrop-blur-md border shadow-sm"
+              className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-black uppercase tracking-wider backdrop-blur-md border shadow-sm truncate"
               style={{
                 background: theme.colors.surface,
                 color: theme.colors.primary,
                 borderColor: theme.colors.border,
               }}
             >
-              <span>{currentSlide.icon}</span>
-              <span>
+              <span className="flex-shrink-0">{currentSlide.icon}</span>
+              <span className="truncate hidden sm:inline">
                 Slide {currentSlideIndex + 1} of {totalSlides}: {currentSlide.title}
+              </span>
+              <span className="truncate sm:hidden">
+                {currentSlideIndex + 1}/{totalSlides}: {currentSlide.title}
               </span>
             </span>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
             {/* Auto Play Toggle */}
             <button
               onClick={() => setIsAutoplay(!isAutoplay)}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all cursor-pointer ${
+              className={`flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all cursor-pointer ${
                 isAutoplay
                   ? 'bg-pink-500 text-white border-pink-400 shadow-sm'
-                  : 'bg-white/60 hover:bg-white text-slate-700 border-slate-200/80'
+                  : 'bg-white/70 hover:bg-white text-slate-700 border-slate-200/80'
               }`}
               title={isAutoplay ? 'Pause auto-play' : 'Start auto-play slideshow'}
             >
               {isAutoplay ? (
                 <>
                   <Pause className="w-3 h-3 fill-current" />
-                  <span>Playing</span>
+                  <span className="hidden xs:inline">Playing</span>
                 </>
               ) : (
                 <>
                   <Play className="w-3 h-3 fill-current" />
-                  <span>Autoplay</span>
+                  <span className="hidden xs:inline">Play</span>
                 </>
               )}
             </button>
@@ -319,7 +322,7 @@ export const BirthdaySlideViewer: React.FC<Props> = ({
             {/* View Mode Toggle */}
             <button
               onClick={() => setViewMode('scroll')}
-              className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-white/60 hover:bg-white text-slate-700 border border-slate-200/80 transition-all cursor-pointer"
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-white/70 hover:bg-white text-slate-700 border border-slate-200/80 transition-all cursor-pointer"
               title="View all as continuous page"
             >
               <LayoutGrid className="w-3 h-3 text-pink-500" />
@@ -396,9 +399,9 @@ export const BirthdaySlideViewer: React.FC<Props> = ({
       </div>
 
       {/* 3. BOTTOM FLOATING NAVIGATION BAR */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 w-[94%] max-w-md">
+      <div className="fixed bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-md pb-safe">
         <div
-          className="p-2 sm:p-2.5 rounded-full backdrop-blur-2xl border shadow-2xl flex items-center justify-between"
+          className="p-1.5 sm:p-2.5 rounded-full backdrop-blur-2xl border shadow-2xl flex items-center justify-between"
           style={{
             background: theme.colors.surface,
             borderColor: theme.colors.border,
@@ -409,26 +412,26 @@ export const BirthdaySlideViewer: React.FC<Props> = ({
           <button
             onClick={prevSlide}
             disabled={currentSlideIndex === 0}
-            className={`flex items-center gap-1.5 px-4 py-2 sm:py-2.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
+            className={`flex items-center gap-1 px-3 sm:px-4 py-2 sm:py-2.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
               currentSlideIndex === 0
                 ? 'opacity-30 cursor-not-allowed text-slate-400'
                 : 'bg-white/80 hover:bg-white text-slate-800 shadow-sm hover:scale-105 active:scale-95'
             }`}
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden xs:inline">Back</span>
+            <span className="hidden sm:inline">Back</span>
           </button>
 
           {/* Dots / Jump Indicators */}
-          <div className="flex items-center gap-1 sm:gap-1.5 px-2">
+          <div className="flex items-center gap-1 sm:gap-1.5 px-1 sm:px-2">
             {slides.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => goToSlide(idx)}
                 className={`h-2 rounded-full transition-all cursor-pointer ${
                   idx === currentSlideIndex
-                    ? 'w-6 bg-pink-500 shadow-sm'
-                    : 'w-2 bg-slate-300 hover:bg-slate-400'
+                    ? 'w-5 sm:w-6 bg-pink-500 shadow-sm'
+                    : 'w-1.5 sm:w-2 bg-slate-300 hover:bg-slate-400'
                 }`}
                 aria-label={`Jump to slide ${idx + 1}`}
               />

@@ -69,7 +69,7 @@ export const AudioPlayer: React.FC<Props> = ({ src, autoPlayTrigger = false }) =
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-24 right-3 sm:bottom-6 sm:right-6 z-40">
       <audio
         ref={audioRef}
         src={src}
@@ -80,11 +80,11 @@ export const AudioPlayer: React.FC<Props> = ({ src, autoPlayTrigger = false }) =
 
       <div className="flex items-center gap-2">
         {isExpanded && (
-          <div className="glass-card bg-slate-900/85 border-slate-700/60 text-white rounded-2xl p-3 shadow-2xl flex items-center gap-3 backdrop-blur-xl animate-in fade-in slide-in-from-right duration-300">
+          <div className="glass-card bg-slate-900/90 border-slate-700/60 text-white rounded-2xl p-2.5 sm:p-3 shadow-2xl flex items-center gap-2 sm:gap-3 backdrop-blur-xl animate-in fade-in slide-in-from-right duration-300 max-w-[calc(100vw-4.5rem)]">
             {/* Progress bar */}
-            <div className="flex flex-col gap-1 w-28 sm:w-36">
+            <div className="flex flex-col gap-1 w-24 sm:w-36">
               <span className="text-[10px] uppercase font-bold tracking-wider text-pink-300 flex items-center gap-1">
-                <Music className="w-3 h-3" /> Birthday Tune
+                <Music className="w-3 h-3 flex-shrink-0" /> <span className="truncate">Birthday Tune</span>
               </span>
               <input
                 type="range"
@@ -120,20 +120,19 @@ export const AudioPlayer: React.FC<Props> = ({ src, autoPlayTrigger = false }) =
         <button
           onClick={() => {
             togglePlay();
-            setIsExpanded(true);
+            setIsExpanded((prev) => !prev);
           }}
-          onMouseEnter={() => setIsExpanded(true)}
-          className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-110 active:scale-95 ${
+          className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 cursor-pointer ${
             isPlaying
-              ? 'bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-pink-500/40 ring-4 ring-pink-400/30 animate-pulse'
+              ? 'bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-pink-500/40 ring-3 sm:ring-4 ring-pink-400/30 animate-pulse'
               : 'bg-white text-slate-800 border border-pink-200 shadow-slate-300/50'
           }`}
           aria-label={isPlaying ? 'Pause music' : 'Play music'}
         >
           {isPlaying ? (
-            <Pause className="w-5 h-5 fill-current" />
+            <Pause className="w-4.5 h-4.5 sm:w-5 sm:h-5 fill-current" />
           ) : (
-            <Play className="w-5 h-5 fill-current ml-0.5" />
+            <Play className="w-4.5 h-4.5 sm:w-5 sm:h-5 fill-current ml-0.5" />
           )}
         </button>
       </div>
